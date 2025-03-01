@@ -28,20 +28,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        .parallax {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://via.placeholder.com/1920x1080');
-            background-attachment: fixed;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
-            z-index: -1;
-        }
-
         .container {
             background-color: rgba(255, 255, 255, 0.9);
             padding: 20px;
@@ -97,20 +83,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-        .neon-button {
-            background-color: transparent;
-            border: 2px solid #28a745;
-            color: #28a745;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: box-shadow 0.3s ease;
-        }
-
-        .neon-button:hover {
-            box-shadow: 0 0 10px #28a745, 0 0 20px #28a745, 0 0 30px #28a745;
-        }
-
         .result-section {
             margin-top: 20px;
         }
@@ -150,20 +122,35 @@
             margin-top: 20px;
         }
 
-        .history-section ul {
-            list-style-type: none;
-            padding: 0;
+        .history-section h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
         }
 
-        .history-section li {
-            font-size: 16px;
-            margin: 5px 0;
-            transition: transform 0.2s ease, color 0.2s ease;
+        .history-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
         }
 
-        .history-section li:hover {
-            transform: translateX(10px);
-            color: #28a745;
+        .history-section th, .history-section td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .history-section th {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .history-section tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .history-section tr:hover {
+            background-color: #ddd;
         }
 
         .loader {
@@ -207,7 +194,8 @@
         }
 
         body.dark-mode h1,
-        body.dark-mode .result-section h2 {
+        body.dark-mode .result-section h2,
+        body.dark-mode .history-section h2 {
             color: #fff;
         }
 
@@ -222,13 +210,16 @@
             background-color: #218838;
         }
 
-        body.dark-mode .neon-button {
-            border-color: #218838;
-            color: #218838;
+        body.dark-mode .history-section th {
+            background-color: #218838;
         }
 
-        body.dark-mode .neon-button:hover {
-            box-shadow: 0 0 10px #218838, 0 0 20px #218838, 0 0 30px #218838;
+        body.dark-mode .history-section tr:nth-child(even) {
+            background-color: #555;
+        }
+
+        body.dark-mode .history-section tr:hover {
+            background-color: #666;
         }
 
         .confetti {
@@ -254,7 +245,7 @@
             <textarea id="participants" placeholder="Masukkan nama peserta, pisahkan dengan koma atau baris baru"></textarea>
             <input type="number" id="numberOfWinners" min="1" max="10" value="1" placeholder="Jumlah pemenang">
             <button id="pickButton">Pick a Winner</button>
-            <button id="resetButton" class="neon-button">Reset</button>
+            <button id="resetButton">Reset</button>
         </div>
         <div class="result-section">
             <h2>Pemenang:</h2>
@@ -263,7 +254,17 @@
         </div>
         <div class="history-section">
             <h2>Senarai Pemenang:</h2>
-            <ul id="winnerHistory"></ul>
+            <table id="winnerHistoryTable">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Nama Pemenang</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Daftar pemenang akan dimasukkan di sini -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -332,10 +333,12 @@
                 // Tambahkan ke history
                 winners.forEach(winner => {
                     winnerHistory.push(winner);
-                    const historyList = document.getElementById('winnerHistory');
-                    const listItem = document.createElement('li');
-                    listItem.textContent = winner;
-                    historyList.appendChild(listItem);
+                    const historyTable = document.getElementById('winnerHistoryTable').getElementsByTagName('tbody')[0];
+                    const newRow = historyTable.insertRow();
+                    const cell1 = newRow.insertCell(0);
+                    const cell2 = newRow.insertCell(1);
+                    cell1.textContent = historyTable.rows.length;
+                    cell2.textContent = winner;
                 });
             }, 2000); // Delay 2 detik
         });
@@ -343,7 +346,7 @@
         document.getElementById('resetButton').addEventListener('click', function() {
             document.getElementById('participants').value = '';
             document.getElementById('winner').textContent = '';
-            document.getElementById('winnerHistory').innerHTML = '';
+            document.getElementById('winnerHistoryTable').getElementsByTagName('tbody')[0].innerHTML = '';
             winnerHistory.length = 0;
         });
 
