@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Picker (Lucky Draw)</title>
     <style>
+        /* General Styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .container {
@@ -21,7 +24,8 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            width: 300px;
+            width: 100%;
+            max-width: 400px;
         }
 
         h1 {
@@ -37,6 +41,16 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 14px;
+            resize: none;
+        }
+
+        .input-section input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
         }
 
         .input-section button {
@@ -48,6 +62,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s ease;
+            margin: 5px;
         }
 
         .input-section button:hover {
@@ -70,9 +85,18 @@
             animation: fadeIn 1s ease-in-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .history-section {
+            margin-top: 20px;
+        }
+
+        .history-section ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .history-section li {
+            font-size: 16px;
+            margin: 5px 0;
         }
 
         .confetti {
@@ -83,9 +107,25 @@
             animation: confetti-fall 2s linear infinite;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         @keyframes confetti-fall {
             0% { transform: translateY(-100vh) rotate(0deg); }
             100% { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 20px;
+            }
+            .input-section button {
+                width: 100%;
+                margin: 5px 0;
+            }
         }
     </style>
 </head>
@@ -94,59 +134,125 @@
         <h1>Random Picker (Lucky Draw)</h1>
         <div class="input-section">
             <textarea id="participants" placeholder="Masukkan nama peserta, pisahkan dengan koma atau baris baru"></textarea>
+            <input type="number" id="numberOfWinners" min="1" max="10" value="1" placeholder="Jumlah pemenang">
             <button id="pickButton">Pick a Winner</button>
+            <button id="resetButton">Reset</button>
         </div>
         <div class="result-section">
             <h2>Pemenang:</h2>
             <p id="winner"></p>
+            <div id="countdown"></div>
         </div>
+        <div class="history-section">
+            <h2>Daftar Pemenang:</h2>
+            <ul id="winnerHistory"></ul>
+        </div>
+        <button id="shareButton">Share Result</button>
     </div>
 
     <!-- Audio untuk efek suara -->
+    <audio id="spinSound" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
     <audio id="winSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+    <audio id="resetSound" src="https://www.soundjay.com/misc/sounds/cartoon-ta-da-01.mp3"></audio>
 
     <script>
+        const winnerHistory = [];
+
         document.getElementById('pickButton').addEventListener('click', function() {
             const participantsText = document.getElementById('participants').value;
             const participantsArray = participantsText.split(/[\n,]/).map(name => name.trim()).filter(name => name.length > 0);
+            const numberOfWinners = parseInt(document.getElementById('numberOfWinners').value);
 
             if (participantsArray.length === 0) {
                 alert('Masukkan nama peserta terlebih dahulu!');
                 return;
             }
 
-            // Efek animasi dan suara
-            const winnerElement = document.getElementById('winner');
-            winnerElement.textContent = "Memilih...";
-            winnerElement.style.opacity = 0;
-
-            // Efek suara
-            const winSound = document.getElementById('winSound');
-            winSound.play();
-
-            // Efek confetti
-            for (let i = 0; i < 50; i++) {
-                const confetti = document.createElement('div');
-                confetti.classList.add('confetti');
-                confetti.style.left = `${Math.random() * 100}vw`;
-                confetti.style.animationDelay = `${Math.random() * 2}s`;
-                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                document.body.appendChild(confetti);
+            if (participantsArray.length < numberOfWinners) {
+                alert('Jumlah pemenang melebihi jumlah peserta!');
+                return;
             }
 
-            // Tunggu sebentar sebelum menampilkan pemenang
-            setTimeout(() => {
-                const randomIndex = Math.floor(Math.random() * participantsArray.length);
-                const winner = participantsArray[randomIndex];
-                winnerElement.textContent = winner;
+            // Efek suara putaran
+            document.getElementById('spinSound').play();
+
+            // Countdown timer
+            startCountdown(3, () => {
+                const winners = [];
+                while (winners.length < numberOfWinners) {
+                    const randomIndex = Math.floor(Math.random() * participantsArray.length);
+                    const winner = participantsArray[randomIndex];
+                    if (!winners.includes(winner)) {
+                        winners.push(winner);
+                    }
+                }
+
+                // Tampilkan pemenang
+                const winnerElement = document.getElementById('winner');
+                winnerElement.textContent = winners.join(', ');
                 winnerElement.style.opacity = 1;
+
+                // Tambahkan ke history
+                winners.forEach(winner => {
+                    winnerHistory.push(winner);
+                    const historyList = document.getElementById('winnerHistory');
+                    const listItem = document.createElement('li');
+                    listItem.textContent = winner;
+                    historyList.appendChild(listItem);
+                });
+
+                // Efek suara pemenang
+                document.getElementById('winSound').play();
+
+                // Efek confetti
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.classList.add('confetti');
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.animationDelay = `${Math.random() * 2}s`;
+                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    document.body.appendChild(confetti);
+                }
 
                 // Hapus confetti setelah 2 detik
                 setTimeout(() => {
                     document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
                 }, 2000);
-            }, 2000); // Delay 2 detik untuk efek dramatis
+            });
         });
+
+        document.getElementById('resetButton').addEventListener('click', function() {
+            document.getElementById('participants').value = '';
+            document.getElementById('winner').textContent = '';
+            document.getElementById('winnerHistory').innerHTML = '';
+            winnerHistory.length = 0;
+            document.getElementById('resetSound').play();
+        });
+
+        document.getElementById('shareButton').addEventListener('click', function() {
+            const winner = document.getElementById('winner').textContent;
+            if (winner) {
+                const shareText = `Selamat kepada ${winner} sebagai pemenang Lucky Draw! 🎉`;
+                const shareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+                window.open(shareUrl, '_blank');
+            } else {
+                alert('Tidak ada pemenang yang dipilih!');
+            }
+        });
+
+        function startCountdown(duration, callback) {
+            let timer = duration;
+            const countdownElement = document.getElementById('countdown');
+            const interval = setInterval(() => {
+                countdownElement.textContent = `Memilih dalam ${timer} detik...`;
+                timer--;
+                if (timer < 0) {
+                    clearInterval(interval);
+                    countdownElement.textContent = '';
+                    callback();
+                }
+            }, 1000);
+        }
     </script>
 </body>
 </html>
