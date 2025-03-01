@@ -230,6 +230,19 @@
         body.dark-mode .neon-button:hover {
             box-shadow: 0 0 10px #218838, 0 0 20px #218838, 0 0 30px #218838;
         }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ff0;
+            animation: confetti-fall 2s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -254,6 +267,10 @@
         </div>
     </div>
 
+    <!-- Audio untuk efek suara -->
+    <audio id="winSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+    <audio id="spinSound" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
+
     <script>
         const winnerHistory = [];
 
@@ -271,6 +288,9 @@
                 alert('Jumlah pemenang melebihi jumlah peserta!');
                 return;
             }
+
+            // Efek suara putaran
+            document.getElementById('spinSound').play();
 
             // Tampilkan loading spinner
             document.getElementById('loading').style.display = 'block';
@@ -290,6 +310,24 @@
                 // Tampilkan pemenang
                 document.getElementById('winner').textContent = winners.join(', ');
                 document.getElementById('loading').style.display = 'none';
+
+                // Efek suara pemenang
+                document.getElementById('winSound').play();
+
+                // Efek confetti
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.classList.add('confetti');
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.animationDelay = `${Math.random() * 2}s`;
+                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    document.body.appendChild(confetti);
+                }
+
+                // Hapus confetti setelah 2 detik
+                setTimeout(() => {
+                    document.querySelectorAll('.confetti').forEach(confetti => confetti.remove());
+                }, 2000);
 
                 // Tambahkan ke history
                 winners.forEach(winner => {
